@@ -4,6 +4,7 @@ import br.com.entity.DisciplinaEntity;
 import br.com.entity.QuestoesEntity;
 import br.com.entity.SerieEntity;
 import com.sun.deploy.util.StringUtils;
+import javafx.scene.control.Alert;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -49,19 +50,19 @@ public class GenericDao<T> {
     public List<T> findWithSql(final Class<T> type, String enunciado, SerieEntity serieEntity, DisciplinaEntity disciplinaEntity) {
         StringBuilder sqlBase = new StringBuilder("SELECT entidade from " + type.getName() + " entidade ");
         List<String> whereCause = new ArrayList<String>();
-        if (disciplinaEntity != null){
-            whereCause.add("id_disciplina = "+disciplinaEntity.getId());
+        if (disciplinaEntity != null) {
+            whereCause.add("id_disciplina = " + disciplinaEntity.getId());
         }
 
-        if (serieEntity != null){
-            whereCause.add("id_serie = "+serieEntity.getId());
+        if (serieEntity != null) {
+            whereCause.add("id_serie = " + serieEntity.getId());
         }
 
-        if (!enunciado.isEmpty()){
-            whereCause.add("lower(entidade.enunciado) like '%"+enunciado.toLowerCase()+"%'");
+        if (!enunciado.isEmpty()) {
+            whereCause.add("lower(enunciadoformatado) like '%" + enunciado.toLowerCase() + "%'");
         }
 
-        if(disciplinaEntity != null || serieEntity != null ||!enunciado.isEmpty()){
+        if (disciplinaEntity != null || serieEntity != null || !enunciado.isEmpty()) {
             sqlBase.append(" where " + StringUtils.join(whereCause, " and "));
 
         }
@@ -93,7 +94,7 @@ public class GenericDao<T> {
         return true;
     }
 
-    public boolean remove(T questao) {
+    public boolean remove(T questao, String entidade) {
         try {
             entityManager.getTransaction().begin();
             entityManager.remove(questao);
@@ -101,16 +102,22 @@ public class GenericDao<T> {
 
         } catch (Exception ex) {
             ex.printStackTrace();
+            if (ex.getCause().toString().contains("ConstraintViolationException")) {
+                Alert alerta = new Alert(Alert.AlertType.ERROR);
+                alerta.setHeaderText("Não é possível deletar " + entidade.toLowerCase());
+                alerta.setContentText("Existe questões relacionadas a " + entidade.toLowerCase() + ".");
+                alerta.showAndWait();
+            }
             entityManager.getTransaction().rollback();
             return false;
         }
         return true;
     }
 
-    public void removeById(final Class<T> type, final int id) {
+    public void removeById(final Class<T> type, final int id, String entidade) {
         try {
             T questao = getById(type, id);
-            remove(questao);
+            remove(questao, entidade);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

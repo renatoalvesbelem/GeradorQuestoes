@@ -76,7 +76,7 @@ public class CadastroMateria extends JFXPanel {
         dialogoInfo.setHeaderText("Deseja deletar " + disciplina.getNomeDisciplina() + " ?");
         Optional<ButtonType> result = dialogoInfo.showAndWait();
         if (result.get() == ButtonType.OK) {
-            GenericDao.getInstance().remove(disciplina);
+            GenericDao.getInstance().remove(disciplina, "Matéria");
             atualizaTabela();
         }
     }

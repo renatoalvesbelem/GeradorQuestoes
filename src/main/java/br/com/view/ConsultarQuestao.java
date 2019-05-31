@@ -101,16 +101,16 @@ public class ConsultarQuestao extends JFXPanel {
     private void deletarQuestao() {
         questoes = tabela.getSelectionModel().getSelectedItem();
         Alert dialogoInfo = new Alert(Alert.AlertType.CONFIRMATION);
-        dialogoInfo.setHeaderText("Deseja deletar " + questoes.getEnunciado() + " ?");
+        dialogoInfo.setHeaderText("Deseja deletar " + questoes.getEnunciadoFormatado() + " ?");
         Optional<ButtonType> result = dialogoInfo.showAndWait();
         if (result.get() == ButtonType.OK) {
-            GenericDao.getInstance().remove(questoes);
+            GenericDao.getInstance().remove(questoes,"Questão");
             atualizaTabela();
         }
     }
 
     private void editarQuestao() {
-        questoes = tabela.getSelectionModel().getSelectedItem();
+        new CadastrarQuestao(tabela.getSelectionModel().getSelectedItem()).start(new Stage());
     }
 
     private void pesquisarQuestao() {
@@ -130,7 +130,7 @@ public class ConsultarQuestao extends JFXPanel {
         //  List<QuestoesEntity> disciplinaList = GenericDao.getInstance().findAll(QuestoesEntity.class);
         TableColumn<QuestoesEntity, String> enunciado = new TableColumn<>("Enunciado");
 
-        enunciado.setCellValueFactory(new PropertyValueFactory<>("enunciado"));
+        enunciado.setCellValueFactory(new PropertyValueFactory<>("enunciadoFormatado"));
         //   tabela.setItems(FXCollections.observableArrayList(disciplinaList));
 
         ScrollPane scrollpane = new ScrollPane();

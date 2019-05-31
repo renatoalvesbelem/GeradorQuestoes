@@ -29,8 +29,8 @@ public class OpcoesEntity {
         this.textoResposta = descricao;
     }
 
-    public String getFlResposta() {
-        return flResposta;
+    public boolean getFlResposta() {
+        return flResposta.equals("S");
     }
 
     public void setFlResposta(String flResposta) {

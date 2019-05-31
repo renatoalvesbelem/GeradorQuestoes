@@ -77,7 +77,7 @@ public class CadastroSerie extends JFXPanel {
         dialogoInfo.setHeaderText("Deseja deletar " + serie.getNomeSerie() + " ?");
         Optional<ButtonType> result = dialogoInfo.showAndWait();
         if (result.get() == ButtonType.OK) {
-            GenericDao.getInstance().remove(serie);
+            GenericDao.getInstance().remove(serie, "Série");
             atualizaTabela();
         }
     }

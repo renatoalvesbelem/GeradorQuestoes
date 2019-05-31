@@ -26,14 +26,14 @@ public class QuestoesEntity {
 
 
     @OneToOne(
-            cascade = CascadeType.ALL
+            //        cascade = CascadeType.ALL
     )
     @JoinColumn(name = "id_disciplina")
     private DisciplinaEntity disciplinaEntity;
 
 
     @OneToOne(
-            cascade = CascadeType.ALL
+            //      cascade = CascadeType.ALL
     )
     @JoinColumn(name = "id_serie")
     private SerieEntity serieEntity;
