@@ -10,6 +10,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.JFXPanel;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -30,8 +31,21 @@ public class CadastrarQuestao extends JFXPanel {
     private ComboBox comboSerie, comboDisciplina;
     private TabPane painelOpcoes = painelOpcoes();
     private char numeracaoAlfabetica = 'a';
+    private boolean questoesAtualizadas = false;
+    QuestoesEntity questoesEntity = null;
+
+    Stage primaryStage;
+
+    public CadastrarQuestao() {
+
+    }
+
+    public CadastrarQuestao(QuestoesEntity questoesEntity) {
+        this.questoesEntity = questoesEntity;
+    }
 
     public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
         Pane root = new Pane();
         Button button = new Button("Salvar");
         button.setLayoutX(410);
@@ -39,12 +53,15 @@ public class CadastrarQuestao extends JFXPanel {
         button.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                if(validarCampos()){
-                    if(salvarQuestao()){
+                if (validarCampos()) {
+                    if (salvarQuestao()) {
                         limparCampos();
-                        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
                         alert.setContentText("A questão foi cadastrada com sucesso!");
                         alert.showAndWait();
+                        if (questoesEntity != null) {
+                            primaryStage.close();
+                        }
                     }
                 }
             }
@@ -56,7 +73,7 @@ public class CadastrarQuestao extends JFXPanel {
         buttonAdicionar.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                adicionarOpcao();
+                adicionarOpcao(null);
             }
         });
 
@@ -97,27 +114,63 @@ public class CadastrarQuestao extends JFXPanel {
         );
         primaryStage.setScene(scene);
         primaryStage.setMaximized(false);
+        atualizarCampos();
         primaryStage.show();
     }
 
+    private void atualizarCampos() {
+        if (questoesEntity != null) {
+            campoEnunciado.setHtmlText(questoesEntity.getEnunciado());
+            campoResposta.setHtmlText(questoesEntity.getResposta());
+            comboDisciplina.getSelectionModel().select(questoesEntity.getDisciplinaEntity());
+            comboSerie.getSelectionModel().select(questoesEntity.getSerieEntity());
+            for (OpcoesEntity opcao : questoesEntity.getOpcoesList()) {
+                adicionarOpcao(opcao);
+            }
+            questoesAtualizadas = true;
+        }
+    }
 
     private boolean salvarQuestao() {
         QuestoesEntity questao = new QuestoesEntity();
+        if (questoesEntity != null) {
+            questao = questoesEntity;
+        }
         questao.setEnunciado(campoEnunciado.getHtmlText());
         questao.setResposta(campoResposta.getHtmlText());
         questao.setDisciplinaEntity((DisciplinaEntity) comboDisciplina.getValue());
         questao.setSerieEntity((SerieEntity) comboSerie.getValue());
+
+
         List<OpcoesEntity> opcoes = new ArrayList();
 
-        for (Tab tab : painelOpcoes.getTabs()) {
-            OpcoesEntity opcao = new OpcoesEntity();
-            opcao.setTextoResposta(((TextArea) ((Pane) tab.getContent()).getChildren().get(0)).getText());
-            opcao.setFlResposta("" + ((CheckBox) ((Pane) tab.getContent()).getChildren().get(1)).isSelected());
-            opcoes.add(opcao);
+        if (questoesEntity != null) {
+            opcoes = questoesEntity.getOpcoesList();
+        }
+
+        if (questoesEntity != null) {
+            for (Tab tab : painelOpcoes.getTabs()) {
+                OpcoesEntity opcao = (OpcoesEntity) tab.getUserData();
+                if (tab.getUserData() == null) {
+                    opcao = new OpcoesEntity();
+                }
+                opcao.setTextoResposta(((TextArea) ((Pane) tab.getContent()).getChildren().get(0)).getText());
+                opcao.setFlResposta("" + ((CheckBox) ((Pane) tab.getContent()).getChildren().get(1)).isSelected());
+                if (tab.getUserData() == null) {
+                    opcoes.add(opcao);
+                }
+            }
+        } else {
+            for (Tab tab : painelOpcoes.getTabs()) {
+                OpcoesEntity opcao = new OpcoesEntity();
+                opcao.setTextoResposta(((TextArea) ((Pane) tab.getContent()).getChildren().get(0)).getText());
+                opcao.setFlResposta("" + ((CheckBox) ((Pane) tab.getContent()).getChildren().get(1)).isSelected());
+                opcoes.add(opcao);
+            }
         }
         questao.setOpcoesList(opcoes);
 
-       return GenericDao.getInstance().merge(questao);
+        return GenericDao.getInstance().merge(questao);
 
     }
 
@@ -179,13 +232,13 @@ public class CadastrarQuestao extends JFXPanel {
         return painelAbas;
     }
 
-    private void adicionarOpcao() {
+    private void adicionarOpcao(OpcoesEntity opcoesEntity) {
+
         Tab aba = new Tab("   " + numeracaoAlfabetica++ + "   ");
         Pane pane = new Pane();
         pane.setMaxSize(600, 300);
         TextArea textField = new TextArea();
         textField.setWrapText(true);
-
         textField.setLayoutY(10);
         textField.setLayoutX(5);
         textField.setMaxSize(500, 100);
@@ -202,6 +255,20 @@ public class CadastrarQuestao extends JFXPanel {
         });
         pane.getChildren().addAll(textField, checkBox);
         aba.setContent(pane);
+        aba.setOnClosed(new EventHandler<Event>() {
+            @Override
+            public void handle(Event t) {
+                if(questoesEntity != null){
+                    questoesEntity.getOpcoesList().remove(aba.getUserData());
+                }
+            }
+        });
+
+        if (!questoesAtualizadas && opcoesEntity != null) {
+            aba.setUserData(opcoesEntity);
+            textField.setText(opcoesEntity.getTextoResposta());
+            checkBox.setSelected(opcoesEntity.getFlResposta());
+        }
         painelOpcoes.getTabs().add(aba);
     }
 
@@ -228,7 +295,7 @@ public class CadastrarQuestao extends JFXPanel {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         String mensagemFinal = "";
         List<String> mensagemList = new ArrayList<String>();
-        if (!checkBoxEstaSelecionado()) {
+        if (painelOpcoes.getTabs().size()>0 & !checkBoxEstaSelecionado()) {
             mensagemList.add("Uma opção deve estar selecionada como correta!");
         }
         if (comboSerie.getValue() == null) {
@@ -259,9 +326,11 @@ public class CadastrarQuestao extends JFXPanel {
         return false;
     }
 
-    public void limparCampos(){
-    campoEnunciado.setHtmlText("");
-    campoResposta.setHtmlText("");
-    painelOpcoes.getTabs().removeAll(painelOpcoes.getTabs());
+    public void limparCampos() {
+        campoEnunciado.setHtmlText("");
+        campoResposta.setHtmlText("");
+        painelOpcoes.getTabs().removeAll(painelOpcoes.getTabs());
     }
+
+
 }

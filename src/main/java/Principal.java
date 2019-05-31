@@ -26,6 +26,8 @@ public class Principal extends Application {
         MenuBar barraMenu = adicionarBarraMenu(0, 0);
 
         Menu menuAdicionar = new Menu("Cadastro");
+
+        Menu menuConsulta = new Menu("Consulta");
         MenuItem cadastrarMateria = new MenuItem("Materia");
         cadastrarMateria.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -48,12 +50,20 @@ public class Principal extends Application {
             }
         });
 
-        menuAdicionar.getItems().add(cadastrarMateria);
+        MenuItem consultarQuestao = new MenuItem("Questões");
+        consultarQuestao.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                scenaConsultarQuestao();
+            }
+        });
         menuAdicionar.getItems().add(cadastrarQuestao);
+        menuAdicionar.getItems().add(cadastrarMateria);
         menuAdicionar.getItems().add(cadastrarSerie);
 
+        menuConsulta.getItems().add(consultarQuestao);
 
-        adicionarMenu(barraMenu, menuAdicionar);
+        adicionarMenu(barraMenu, menuAdicionar, menuConsulta);
 
 
         root = new Pane();
@@ -71,6 +81,10 @@ public class Principal extends Application {
                 System.exit(0);
             }
         });
+    }
+
+    private void scenaConsultarQuestao() {
+        new ConsultarQuestao().start(new Stage());
     }
 
     private void questaoScena() {
